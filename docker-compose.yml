@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  ldap:
+    image: ghcr.io/larsks/docker-slapd-example:alpine
+    volumes:
+      - ./certs:/data/certs
+      - ./ldap/init:/docker-entrypoint.d
+    environment:
+      LDAP_DEBUG_LEVEL: "129"
+
+  postgres:
+    image: docker.io/postgres:14
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_HOST_AUTH_METHOD: >-
+        ldap ldapurl=ldap://ldap ldaptls=1 ldapprefix="cn=" ldapsuffix=",ou=users,dc=example,dc=com"
+      LDAPCONF: /var/lib/postgresql/data/ldap.conf
+    volumes:
+      - ./certs:/data/certs
+      - "pg_data:/var/lib/postgresql"
+      - ./postgres/init:/docker-entrypoint-initdb.d
+
+volumes:
+  pg_data:
